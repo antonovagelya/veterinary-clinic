@@ -246,9 +246,9 @@ def create_appointment_menu(db: Database) -> None:
     doctor_ids = {did for did, _ in doctors}
 
     # показываем пациентов
-    while True:
-        console.print(render_patients_table(patients))
+    console.print(render_patients_table(patients))
 
+    while True:
         patient_id_str = console.input("Введите ID пациента: ").strip()
 
         if patient_id_str == "":
@@ -271,9 +271,9 @@ def create_appointment_menu(db: Database) -> None:
         break # выходим из цикла выбора пациента
 
     # показваем врачей
-    while True:
-        console.print("\n", render_doctors_table(doctors))
+    console.print("\n", render_doctors_table(doctors))
 
+    while True:
         doctor_id_str = console.input("Введите ID врача: ").strip()
 
         if doctor_id_str == "":
@@ -295,14 +295,14 @@ def create_appointment_menu(db: Database) -> None:
 
         break # выходим из цикла выбора врача
 
+    dates = get_available_dates()
+
+    console.print("\n[bold]Выберите дату:[/bold]")
+    for i, d in enumerate(dates, start=1):
+        console.print(f"{i}. {d.strftime('%Y-%m-%d')}")
+
     # выбор времени
     while True:
-        dates = get_available_dates()
-
-        console.print("\n[bold]Выберите дату:[/bold]")
-        for i, d in enumerate(dates, start=1):
-            console.print(f"{i}. {d.strftime('%Y-%m-%d')}")
-
         date_choice = console.input("Номер даты: ").strip()
 
         if date_choice == "":
@@ -330,11 +330,11 @@ def create_appointment_menu(db: Database) -> None:
             console.input("Нажмите Enter, чтобы выбрать другую дату...")
             continue
 
+        console.print("\n[bold]Доступное время:[/bold]")
+        for i, slot in enumerate(slots, start=1):
+            console.print(f"{i}. {slot.strftime('%H:%M')}")
+        
         while True:
-            console.print("\n[bold]Доступное время:[/bold]")
-            for i, slot in enumerate(slots, start=1):
-                console.print(f"{i}. {slot.strftime('%H:%M')}")
-
             slot_choice = console.input("Номер времени: ").strip()
 
             if slot_choice == "":
