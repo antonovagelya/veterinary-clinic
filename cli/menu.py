@@ -115,16 +115,16 @@ def register_patient_menu(db: Database) -> None:
         patient_name = console.input("Имя животного: ").strip()
 
         if patient_name == "":
-                console.print("[blue]Процесс регистрации прерван.[/blue]")
-                console.input("Нажмите Enter, чтобы вернуться в меню...")
-                return
+            console.print("[blue]Процесс регистрации прерван.[/blue]")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
+            return
 
         species = console.input("Вид животного: ").strip()
 
         if species == "":
-                console.print("[blue]Процесс регистрации прерван.[/blue]")
-                console.input("Нажмите Enter, чтобы вернуться в меню...")
-                return
+            console.print("[blue]Процесс регистрации прерван.[/blue]")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
+            return
 
         try:
             patient = register_patient(
@@ -431,11 +431,13 @@ def cancel_appointment_menu(db: Database) -> None:
             continue
 
         # подтверждение
+        success = False
         while True:
             confirm = console.input("\nВы уверены, что хотите отменить эту запись? (да/нет): ").strip().lower()
 
             if confirm == "да":
                 success = delete_appointment(db, appointment_id) # удаление
+                break
             elif confirm == "нет":
                 console.print("[blue]Запись не будет удалена.[/blue]")
                 console.input("Нажмите Enter, чтобы вернуться в меню...")
@@ -444,7 +446,6 @@ def cancel_appointment_menu(db: Database) -> None:
                 console.print("[red]Неверное подтверждение удаления, введите 'да' или 'нет'.")
                 console.input("Нажмите Enter, чтобы попробовать еще раз.")
                 continue
-            break
 
         if success:
             console.print("[green]Запись успешно отменена.[/green]")
@@ -465,7 +466,7 @@ def show_medical_card_menu(db: Database) -> None:
     patients = get_all_patients(db)
     if not patients:
         console.print("[blue]Пациентов пока нет.[/blue]")
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
 
     # Показываем список пациентов (полная таблица)
@@ -477,7 +478,7 @@ def show_medical_card_menu(db: Database) -> None:
         patient_id_str = console.input("Введите ID пациента (Enter — выход): ").strip()
         if patient_id_str == "":
             console.print("[blue]Просмотр медкарты отменен.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
             return
         if not patient_id_str.isdigit():
             console.print("[red]ID пациента должен быть числом.[/red]")
@@ -495,7 +496,7 @@ def show_medical_card_menu(db: Database) -> None:
     info = get_patient_card_info(db, patient_id)
     if info is None:
         console.print("[red]Не удалось найти данные пациента.[/red]")
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
 
     pid, patient_name, species, owner_name, owner_phone = info
@@ -515,7 +516,7 @@ def show_medical_card_menu(db: Database) -> None:
 
     if not appointments:
         console.print("\n[blue]Записей к врачу нет.[/blue]")
-        console.input("\nНажмите Enter, чтобы вернуться в главное меню...")
+        console.input("\nНажмите Enter, чтобы вернуться в меню...")
         return
 
     table = Table(show_header=True, header_style="bold cyan")
@@ -533,7 +534,7 @@ def show_medical_card_menu(db: Database) -> None:
     console.print("\n[bold]Записи к врачу:[/bold]")
     console.print(table)
 
-    console.input("\nНажмите Enter, чтобы вернуться в главное меню...")
+    console.input("\nНажмите Enter, чтобы вернуться в меню...")
 
 
 def run_menu(db: Database):
@@ -552,9 +553,9 @@ def run_menu(db: Database):
         elif choice == "4":
             show_future_appointments(db)
         elif choice == "5":
-             cancel_appointment_menu(db)
+            cancel_appointment_menu(db)
         elif choice == "6":
-             show_medical_card_menu(db)
+            show_medical_card_menu(db)
         elif choice == "0":
             break
         else:
