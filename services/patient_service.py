@@ -48,8 +48,6 @@ def create_owner(db: Database, owner: Owner) -> Owner:
         cursor.execute(query, (owner.full_name, owner.phone))
         owner_id = cursor.fetchone()[0]
 
-    conn.commit()
-
     owner.id = owner_id # присваиваем объекту id, назначенный базой данных
     return owner
 
@@ -73,8 +71,6 @@ def create_patient(db: Database, patient: Patient) -> Patient:
         )
         patient_id = cursor.fetchone()[0]
 
-    conn.commit()
-
     patient.id = patient_id
     return patient
 
@@ -90,24 +86,34 @@ def register_patient(
     Регистрирует нового пациента.
     Если владелец уже существует — используется он, иначе создается новый.
     """
-    owner = get_owner_by_phone(db, owner_phone)
+    conn = db.get_connection()
 
-    if owner is None:
-        owner = Owner(
+    try:
+        owner = get_owner_by_phone(db, owner_phone)
+
+        if owner is None:
+            owner = Owner(
+                id=None,
+                full_name=owner_full_name,
+                phone=owner_phone
+            )
+            owner = create_owner(db, owner)
+
+        patient = Patient(
             id=None,
-            full_name=owner_full_name,
-            phone=owner_phone
+            owner_id=owner.id,
+            name=patient_name,
+            species=species
         )
-        owner = create_owner(db, owner)
 
-    patient = Patient(
-        id=None,
-        owner_id=owner.id,
-        name=patient_name,
-        species=species
-    )
+        patient = create_patient(db, patient)
 
-    return create_patient(db, patient)
+        conn.commit()
+        return patient
+
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def get_all_patients(db: Database) -> list[tuple[int, str, str, str, str]]:

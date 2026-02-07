@@ -171,39 +171,48 @@ def create_appointment(db: Database, patient_id: int, doctor_id: int, appointmen
 
     conn = db.get_connection()
 
-    query = """
-        INSERT INTO appointments (patient_id, doctor_id, date_time)
-        VALUES (%s, %s, %s)
-    """
+    try:
+        query = """
+            INSERT INTO appointments (patient_id, doctor_id, date_time)
+            VALUES (%s, %s, %s)
+        """
 
-    with conn.cursor() as cursor:
-        cursor.execute(
-            query,
-            (patient_id, doctor_id, appointment_datetime)
-        )
+        with conn.cursor() as cursor:
+            cursor.execute(
+                query,
+                (patient_id, doctor_id, appointment_datetime)
+            )
 
-    conn.commit()
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def get_future_appointments(db: Database) -> list[tuple[int, str, str, datetime]]:
     """
     Получение списка всех предстоящих записей (просто для просмотра).
-    Список содержит id записи, имя пациента, ФИО доктора и дату и время приема.
+    Список содержит id записи, имя пациента, вид, ФИО доктора и дату и время приема.
     """
     conn = db.get_connection()
 
     query = """
-        SELECT
-            a.id,
-            p.name AS patient_name,
-            d.full_name AS doctor_name,
-            a.date_time
-        FROM appointments a
-        JOIN patients p ON a.patient_id = p.id
-        JOIN doctors d ON a.doctor_id = d.id
-        WHERE a.date_time >= NOW()
-        ORDER BY a.date_time
-    """
+    SELECT
+        a.id,
+        p.name AS patient_name,
+        p.species AS patient_species,
+        o.full_name AS owner_name,
+        o.phone AS owner_phone,
+        d.full_name AS doctor_name,
+        a.date_time
+    FROM appointments a
+    JOIN patients p ON a.patient_id = p.id
+    JOIN owners o ON p.owner_id = o.id
+    JOIN doctors d ON a.doctor_id = d.id
+    WHERE a.date_time >= NOW()
+    ORDER BY a.date_time
+"""
 
     with conn.cursor() as cursor:
         cursor.execute(query)

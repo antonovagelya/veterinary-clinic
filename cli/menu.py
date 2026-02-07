@@ -54,7 +54,7 @@ def show_menu() -> None:
     console.print("5. Отменить запись")
     console.print("6. Просмотр медицинской карты пациента")
     console.print("0. Выход")
-
+    
 
 def register_patient_menu(db: Database) -> None:
     """
@@ -64,73 +64,86 @@ def register_patient_menu(db: Database) -> None:
     - телефон проверяется по шаблону +7XXXXXXXXXX;
     - при возникновении ошибки -> вывод сообщения и выход в главное меню.
     """
-    
-    console.print("\n\n[bold cyan]Регистрация нового пациента[/bold cyan]")
-    console.print("Нажмите Enter в любом поле для отмены.\n")
-
-    owner_full_name = console.input("ФИО владельца (Enter — отмена): ").strip() # удаляем лишние пробелы
-    if owner_full_name == "":
-        console.print("[blue]Процесс регистрации прерван.[/blue]")
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
-        return
-
     while True:
-        owner_phone = console.input("Телефон владельца в формате +7XXXXXXXXXX (Enter — отмена): ").strip()
-        if owner_phone == "":
+        console.print("\n\n[bold cyan]Регистрация нового пациента[/bold cyan]")
+        console.print("Для выхода из режима регистрации оставьте любое поле пустым (нажмите Enter).\n")
+
+        owner_full_name = console.input("ФИО владельца: ").strip() # удаляем лишние пробелы
+        
+        if owner_full_name == "":
             console.print("[blue]Процесс регистрации прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
             return
-        # проверка телефона по шаблону
-        if not PHONE_PATTERN.match(owner_phone):
-            console.print("[red]Ошибка: телефон должен быть в формате +7XXXXXXXXXX.[/red]")
+
+        while True:
+            owner_phone = console.input("Телефон владельца (+7XXXXXXXXXX): ").strip()
+            
+            if owner_phone == "":
+                console.print("[blue]Процесс регистрации прерван.[/blue]")
+                console.input("Нажмите Enter, чтобы вернуться в меню...")
+                return
+            
+            # проверка телефона по шаблону
+            if not PHONE_PATTERN.match(owner_phone):
+                console.print("[red]Ошибка: телефон должен быть в формате +7XXXXXXXXXX.[/red]")
+                console.input("Нажмите Enter, чтобы попробовать еще раз.")
+                continue
+
+            existing_owner = get_owner_by_phone(db, owner_phone)
+
+            # если телефон уже есть и ФИО отличается — спрашиваем подтверждение
+            if existing_owner is not None and existing_owner.full_name != owner_full_name:
+                console.print(f"[blue]Найден владелец с этим телефоном:[/blue] {existing_owner.full_name}")
+
+                use_existing: bool | None = None
+                while True:
+                    choice = console.input("Использовать этого владельца? (да/нет): ").strip().lower()
+                    if choice == "да":
+                        use_existing = True
+                        break
+                    elif choice == "нет":
+                        use_existing = False
+                        break
+                    
+                    console.print("[red]Неверное подтверждение, введите 'да' или 'нет'.")
+
+                if use_existing is False:
+                    console.print("[blue]Введите другой номер телефона.[/blue]")
+                    continue    
+            break
+
+        patient_name = console.input("Имя животного: ").strip()
+
+        if patient_name == "":
+                console.print("[blue]Процесс регистрации прерван.[/blue]")
+                console.input("Нажмите Enter, чтобы вернуться в меню...")
+                return
+
+        species = console.input("Вид животного: ").strip()
+
+        if species == "":
+                console.print("[blue]Процесс регистрации прерван.[/blue]")
+                console.input("Нажмите Enter, чтобы вернуться в меню...")
+                return
+
+        try:
+            patient = register_patient(
+                db=db,
+                owner_full_name=owner_full_name,
+                owner_phone=owner_phone,
+                patient_name=patient_name,
+                species=species
+            )
+        except Exception as e:
+            console.print("[red]Ошибка при регистрации пациента.[/red]")
+            console.print(e) # отображаем сообщение ошибки
             console.input("Нажмите Enter, чтобы попробовать еще раз.")
             continue
-
-        existing_owner = get_owner_by_phone(db, owner_phone)
-        if existing_owner is not None and existing_owner.full_name != owner_full_name:
-            console.print(f"[blue]Найден владелец с этим телефоном:[/blue] {existing_owner.full_name}")
-
-            while True:
-                choice = console.input("Использовать этого владельца? (да/нет): ").strip().lower()
-
-                if choice == "да":
-                        break
-                elif choice == "нет":
-                    console.print("[blue]Введите другой номер телефона при регистрации.[/blue]")
-                    console.input("Нажмите Enter, чтобы вернуться в главное меню...")
-                    return
-                else:
-                    console.print("[red]Неверное подтверждение, введите 'да' или 'нет'.")
-                    console.input("Нажмите Enter, чтобы попробовать еще раз.")
-                    continue
-        break
-
-    patient_name = console.input("Имя животного (Enter — отмена): ").strip()
-    if patient_name == "":
-            console.print("[blue]Процесс регистрации прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
-            return
-
-    species = console.input("Вид животного (Enter — отмена): ").strip()
-    if species == "":
-            console.print("[blue]Процесс регистрации прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
-            return
-
-    try:
-        patient = register_patient(
-            db=db,
-            owner_full_name=owner_full_name,
-            owner_phone=owner_phone,
-            patient_name=patient_name,
-            species=species
-        )
-    except Exception as e:
-        console.print("[red]Ошибка при регистрации пациента.[/red]")
-        console.print(e) # отображаем сообщение ошибки
-        return
+        
+        break # выход из главного цикла
 
     console.print(f"\n[green]Пациент успешно зарегистрирован![/green]\n{patient}")
+    console.input("Нажмите Enter, чтобы вернуться в меню...")
     
 
 def render_patients_table(patients: list[tuple[int, str, str, str, str]]) -> Table:
@@ -164,18 +177,21 @@ def render_doctors_table(doctors: list[tuple[int, str]]) -> Table:
     return table
 
 
-def render_appointments_table(appointments: list[tuple[int, str, str, datetime]]) -> Table:
+def render_appointments_table(appointments: list[tuple[int, str, str, str, str, str, datetime]]) -> Table:
     """
     Строит таблицу записей.
     """
     table = Table(show_header=True, header_style="bold cyan")
     table.add_column("ID")
     table.add_column("Пациент")
+    table.add_column("Вид")
+    table.add_column("Владелец")
+    table.add_column("Контакты владельца")
     table.add_column("Доктор")
     table.add_column("Дата и время")
 
-    for aid, name, full_name, date_time in appointments:
-        table.add_row(str(aid), name, full_name, date_time.strftime("%Y-%m-%d %H:%M"))
+    for aid, name, species, owner, owner_phone, full_name, date_time in appointments:
+        table.add_row(str(aid), name, species, owner, owner_phone, full_name, date_time.strftime("%Y-%m-%d %H:%M"))
     
     return table
 
@@ -191,11 +207,11 @@ def show_patients(db: Database) -> None:
     # если список пациентов оказался пустым -> информируем пользователя
     if not patients:
         console.print("[blue]Пациентов пока нет.[/blue]")
-        console.input("\nНажмите Enter, чтобы вернуться в главное меню...")
+        console.input("\nНажмите Enter, чтобы вернуться в меню...")
         return
 
     console.print(render_patients_table(patients))
-    console.input("\nНажмите Enter, чтобы вернуться в главное меню...")
+    console.input("\nНажмите Enter, чтобы вернуться в меню...")
 
 
 def create_appointment_menu(db: Database) -> None:
@@ -208,21 +224,21 @@ def create_appointment_menu(db: Database) -> None:
     - время выбирается из доступных слотов (09:00-16:30, шаг 30 минут).
     """
     console.print("\n\n[bold cyan]Запись к врачу[/bold cyan]")
-    console.print("Нажмите Enter в любом поле для отмены.\n")
+    console.print("Для выхода из режима записи к врачу оставьте любое поле пустым (нажмите Enter).\n")
 
     # получаем список пациентов
     patients = get_all_patients(db)
     # если он пуст -> сообщаем пользователю и возвращаемся в главное меню
     if not patients:
         console.print("[blue]Нет пациентов для записи.[/blue]")
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
     
     # получаем список врачей
     doctors = get_all_doctors(db)
     if not doctors:
         console.print("[blue]Нет врачей для записи[/blue]")
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
     
     # собираем id пациентов и врачей для дальнейшей проверки ввода
@@ -233,11 +249,13 @@ def create_appointment_menu(db: Database) -> None:
     while True:
         console.print(render_patients_table(patients))
 
-        patient_id_str = console.input("Введите ID пациента (Enter — отмена): ").strip()
+        patient_id_str = console.input("Введите ID пациента: ").strip()
+
         if patient_id_str == "":
             console.print("[blue]Процесс записи прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
             return
+        
         if not patient_id_str.isdigit():
             console.print("[red]ID пациента должен быть числом.[/red]")
             console.input("Нажмите Enter, чтобы попробовать еще раз.")
@@ -256,11 +274,13 @@ def create_appointment_menu(db: Database) -> None:
     while True:
         console.print("\n", render_doctors_table(doctors))
 
-        doctor_id_str = console.input("Введите ID врача (Enter — отмена): ").strip()
+        doctor_id_str = console.input("Введите ID врача: ").strip()
+
         if doctor_id_str == "":
             console.print("[blue]Процесс записи прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
             return
+        
         if not doctor_id_str.isdigit():
             console.print("[red]ID врача должен быть числом.[/red]")
             console.input("Нажмите Enter, чтобы попробовать еще раз.")
@@ -278,15 +298,18 @@ def create_appointment_menu(db: Database) -> None:
     # выбор времени
     while True:
         dates = get_available_dates()
+
         console.print("\n[bold]Выберите дату:[/bold]")
         for i, d in enumerate(dates, start=1):
             console.print(f"{i}. {d.strftime('%Y-%m-%d')}")
 
-        date_choice = console.input("Номер даты (Enter — отмена): ").strip()
+        date_choice = console.input("Номер даты: ").strip()
+
         if date_choice == "":
             console.print("[blue]Процесс записи прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+            console.input("Нажмите Enter, чтобы вернуться в меню...")
             return
+        
         if not date_choice.isdigit():
             console.print("[red]Номер даты должен быть числом.[/red]")
             console.input("Нажмите Enter, чтобы попробовать еще раз.")
@@ -312,11 +335,13 @@ def create_appointment_menu(db: Database) -> None:
             for i, slot in enumerate(slots, start=1):
                 console.print(f"{i}. {slot.strftime('%H:%M')}")
 
-            slot_choice = console.input("Номер времени (Enter — отмена): ").strip()
+            slot_choice = console.input("Номер времени: ").strip()
+
             if slot_choice == "":
                 console.print("[blue]Процесс записи прерван.[/blue]")
-                console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+                console.input("Нажмите Enter, чтобы вернуться в меню...")
                 return
+            
             if not slot_choice.isdigit():
                 console.print("[red]Номер времени должен быть числом.[/red]")
                 console.input("Нажмите Enter, чтобы попробовать еще раз.")
@@ -339,11 +364,11 @@ def create_appointment_menu(db: Database) -> None:
     except Exception as e:
         console.print("[red]Ошибка при создании записи.[/red]")
         console.print(e)
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
 
     console.print("[green]Запись успешно создана![/green]")
-    console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+    console.input("Нажмите Enter, чтобы вернуться в меню...")
     return
 
 
@@ -371,13 +396,13 @@ def cancel_appointment_menu(db: Database) -> None:
     """
 
     console.print("\n[bold cyan]Отмена записи[/bold cyan]")
-    console.print("Нажмите Enter в любом поле для отмены.\n")
+    console.print("Для выхода из режима отмены записи к врачу оставьте любое поле пустым (нажмите Enter).\n")
 
     appointments = get_future_appointments(db)
 
     if not appointments:
-        console.print("[blue]Нет будущих записей.[/blue]")
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.print("[blue]Нет предстоящих записей.[/blue]")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
 
     console.print(render_appointments_table(appointments))
@@ -386,11 +411,11 @@ def cancel_appointment_menu(db: Database) -> None:
     appointment_ids = {aid for aid, *_ in appointments}
 
     while True:
-        aid_str = console.input("Введите ID записи для отмены (Enter — выход): ").strip()
+        aid_str = console.input("Введите ID записи для отмены: ").strip()
 
         if aid_str == "":
             console.print("[blue]Процесс отмены записи прерван.[/blue]")
-            console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+            console.input("Нажмите Enter, чтобы вернуться меню...")
             return
 
         if not aid_str.isdigit():
@@ -413,7 +438,7 @@ def cancel_appointment_menu(db: Database) -> None:
                 success = delete_appointment(db, appointment_id) # удаление
             elif confirm == "нет":
                 console.print("[blue]Запись не будет удалена.[/blue]")
-                console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+                console.input("Нажмите Enter, чтобы вернуться в меню...")
                 return
             else:
                 console.print("[red]Неверное подтверждение удаления, введите 'да' или 'нет'.")
@@ -426,7 +451,7 @@ def cancel_appointment_menu(db: Database) -> None:
         else:
             console.print("[red]Не удалось удалить запись.[/red]")
 
-        console.input("Нажмите Enter, чтобы вернуться в главное меню...")
+        console.input("Нажмите Enter, чтобы вернуться в меню...")
         return
 
 
