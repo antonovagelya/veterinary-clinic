@@ -461,7 +461,7 @@ def show_medical_card_menu(db: Database) -> None:
     Просмотр медицинской карты пациента.
     """
     console.print("\n[bold cyan]Просмотр медицинской карты[/bold cyan]")
-    console.print("Нажмите Enter в любом поле для отмены.\n")
+    console.print("Для выхода из режима просмотра медицинской карты оставьте поле выбора пациента пустым (нажмите Enter).\n")
 
     patients = get_all_patients(db)
     if not patients:
@@ -475,7 +475,7 @@ def show_medical_card_menu(db: Database) -> None:
     patient_ids = {pid for pid, *_ in patients}
 
     while True:
-        patient_id_str = console.input("Введите ID пациента (Enter — выход): ").strip()
+        patient_id_str = console.input("Введите ID пациента: ").strip()
         if patient_id_str == "":
             console.print("[blue]Просмотр медкарты отменен.[/blue]")
             console.input("Нажмите Enter, чтобы вернуться в меню...")
@@ -507,7 +507,6 @@ def show_medical_card_menu(db: Database) -> None:
         f"[bold]Владелец:[/bold] {owner_name}\n"
         f"[bold]Телефон:[/bold] {owner_phone}"
     )
-
     
     console.print("\n", Panel(header_text, title=f"Медкарта №{pid}", style="cyan", expand=False))
 

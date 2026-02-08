@@ -8,7 +8,7 @@ def main():
         port=5432,
         database="veterinary_clinic",
         user="postgres",
-        password="your_password"
+        password="10451045"
     )
     
     db.connect()
