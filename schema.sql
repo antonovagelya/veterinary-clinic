@@ -22,7 +22,7 @@ CREATE TABLE doctors (
     full_name VARCHAR(255) NOT NULL
 );
 
--- Таблица записей на приём
+-- Таблица записей на прием
 CREATE TABLE appointments (
     id SERIAL PRIMARY KEY,
     patient_id INTEGER NOT NULL,
@@ -40,3 +40,19 @@ CREATE TABLE appointments (
         UNIQUE (doctor_id, date_time)
 
 );
+
+-- Тестовые данные
+INSERT INTO owners (full_name, phone) VALUES
+('Иванов Иван Иванович', '+79161234567'),
+('Петрова Анна Сергеевна', '+79031234568'),
+('Сидоров Алексей Владимирович', '+79261234569');
+
+INSERT INTO patients (owner_id, name, species) VALUES
+(1, 'Барсик', 'Кот'),
+(1, 'Шарик', 'Собака'),
+(2, 'Мурка', 'Кошка'),
+(3, 'Кеша', 'Попугай');
+
+INSERT INTO doctors (full_name) VALUES
+('Смирнова Ольга Петровна'),
+('Кузнецов Дмитрий Алексеевич');
